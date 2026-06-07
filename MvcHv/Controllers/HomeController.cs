@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Net.Http.Json;
 using Microsoft.AspNetCore.Mvc;
 using MvcHv.Models;
 
@@ -6,9 +7,25 @@ namespace MvcHv.Controllers;
 
 public class HomeController : Controller
 {
+    private readonly IHttpClientFactory _httpClientFactory;
+
+    public HomeController(IHttpClientFactory httpClientFactory)
+    {
+        _httpClientFactory = httpClientFactory;
+    }
+
     public IActionResult Index()
     {
         return View();
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> TestPayload()
+    {
+        var client = _httpClientFactory.CreateClient();
+        var payload = await client.GetFromJsonAsync<TestApiResponse>("http://127.0.0.1:5000/api/test");
+
+        return Json(payload ?? new TestApiResponse());
     }
 
     public IActionResult Privacy()

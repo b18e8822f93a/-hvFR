@@ -2,7 +2,31 @@
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container py-4">
+    <h1 class="h3 mb-3">API Test Viewer</h1>
+
+    <button id="load-test-payload" class="btn btn-primary" type="button">
+        Load API Payload
+    </button>
+
+    <div class="mt-3">
+        <label for="api-output" class="form-label">Response</label>
+        <pre id="api-output" class="border rounded p-3 bg-light mb-0">Click the button to load data.</pre>
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        const loadButton = document.getElementById('load-test-payload');
+        const output = document.getElementById('api-output');
+
+        loadButton.addEventListener('click', async () => {
+            output.textContent = 'Loading...';
+
+            const response = await fetch('/Home/TestPayload');
+            const data = await response.json();
+
+            output.textContent = JSON.stringify(data, null, 2);
+        });
+    </script>
+}
