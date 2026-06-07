@@ -28,6 +28,16 @@ public class HomeController : Controller
         return Json(payload ?? new TestApiResponse());
     }
 
+    [HttpPost]
+    public async Task<IActionResult> TestPayloadWithInput([FromBody] TestApiRequest request)
+    {
+        var client = _httpClientFactory.CreateClient();
+        var response = await client.PostAsJsonAsync("http://127.0.0.1:5000/api/testPost", new { x = request.X });
+        var payload = await response.Content.ReadFromJsonAsync<TestApiResponse>();
+
+        return Json(payload ?? new TestApiResponse());
+    }
+
     public IActionResult Privacy()
     {
         return View();
