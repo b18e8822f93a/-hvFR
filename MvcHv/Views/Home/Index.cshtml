@@ -18,6 +18,18 @@
     </div>
 
     <div class="mt-3">
+        <label for="search-query" class="form-label">Search query</label>
+        <input id="search-query" class="form-control" type="text" value="hospital" />
+
+        <label for="search-topk" class="form-label mt-2">Top K</label>
+        <input id="search-topk" class="form-control" type="number" min="1" value="5" />
+
+        <button id="send-search-payload" class="btn btn-warning mt-2" type="button">
+            Send To /api/search
+        </button>
+    </div>
+
+    <div class="mt-3">
         <label for="api-output" class="form-label">Response</label>
         <pre id="api-output" class="border rounded p-3 bg-light mb-0">Click the button to load data.</pre>
     </div>
@@ -27,7 +39,10 @@
     <script>
         const loadButton = document.getElementById('load-test-payload');
         const sendButton = document.getElementById('send-test-payload');
+        const sendSearchButton = document.getElementById('send-search-payload');
         const xInput = document.getElementById('x-input');
+        const searchQueryInput = document.getElementById('search-query');
+        const searchTopKInput = document.getElementById('search-topk');
         const output = document.getElementById('api-output');
 
         loadButton.addEventListener('click', async () => {
@@ -46,6 +61,22 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ x: xInput.value })
+            });
+
+            const data = await response.json();
+            output.textContent = JSON.stringify(data, null, 2);
+        });
+
+        sendSearchButton.addEventListener('click', async () => {
+            output.textContent = 'Searching...';
+
+            const response = await fetch('/Home/SearchPayload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    query: searchQueryInput.value,
+                    topK: Number(searchTopKInput.value || 5)
+                })
             });
 
             const data = await response.json();

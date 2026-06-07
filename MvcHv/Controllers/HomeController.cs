@@ -38,6 +38,20 @@ public class HomeController : Controller
         return Json(payload ?? new TestApiResponse());
     }
 
+    [HttpPost]
+    public async Task<IActionResult> SearchPayload([FromBody] SearchApiRequest request)
+    {
+        var client = _httpClientFactory.CreateClient();
+        var response = await client.PostAsJsonAsync("http://127.0.0.1:5000/api/search", new
+        {
+            query = request.Query,
+            top_k = request.TopK
+        });
+        var payload = await response.Content.ReadFromJsonAsync<object>();
+
+        return Json(payload ?? new { });
+    }
+
     public IActionResult Privacy()
     {
         return View();
