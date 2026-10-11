@@ -37,6 +37,23 @@
 
 @section Scripts {
     <script>
+        async function displayResponse(request, pendingMessage) {
+            output.textContent = pendingMessage;
+
+            try {
+                const response = await request;
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || data.title || `Request failed (${response.status}).`);
+                }
+
+                output.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                output.textContent = `Request failed: ${error.message}`;
+            }
+        }
+
         const loadButton = document.getElementById('load-test-payload');
         const sendButton = document.getElementById('send-test-payload');
         const sendSearchButton = document.getElementById('send-search-payload');
@@ -46,41 +63,26 @@
         const output = document.getElementById('api-output');
 
         loadButton.addEventListener('click', async () => {
-            output.textContent = 'Loading...';
-
-            const response = await fetch('/Home/TestPayload');
-            const data = await response.json();
-
-            output.textContent = JSON.stringify(data, null, 2);
+            await displayResponse(fetch('/Home/TestPayload'), 'Loading...');
         });
 
         sendButton.addEventListener('click', async () => {
-            output.textContent = 'Sending...';
-
-            const response = await fetch('/Home/TestPayloadWithInput', {
+            await displayResponse(fetch('/Home/TestPayloadWithInput', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ x: xInput.value })
-            });
-
-            const data = await response.json();
-            output.textContent = JSON.stringify(data, null, 2);
+            }), 'Sending...');
         });
 
         sendSearchButton.addEventListener('click', async () => {
-            output.textContent = 'Searching...';
-
-            const response = await fetch('/Home/SearchPayload', {
+            await displayResponse(fetch('/Home/SearchPayload', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     query: searchQueryInput.value,
                     topK: Number(searchTopKInput.value || 5)
                 })
-            });
-
-            const data = await response.json();
-            output.textContent = JSON.stringify(data, null, 2);
+            }), 'Searching...');
         });
     </script>
 }

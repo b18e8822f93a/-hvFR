@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using MvcHv.Models;
 
@@ -22,34 +23,70 @@ public class HomeController : Controller
     [HttpGet]
     public async Task<IActionResult> TestPayload()
     {
-        var client = _httpClientFactory.CreateClient();
-        var payload = await client.GetFromJsonAsync<TestApiResponse>("http://127.0.0.1:5000/api/test");
+        try
+        {
+            var client = _httpClientFactory.CreateClient("BackendApi");
+            var payload = await client.GetFromJsonAsync<TestApiResponse>("api/test");
 
-        return Json(payload ?? new TestApiResponse());
+            return Json(payload ?? new TestApiResponse());
+        }
+        catch (Exception exception) when (exception is HttpRequestException or JsonException)
+        {
+            return BackendUnavailable();
+        }
     }
 
     [HttpPost]
     public async Task<IActionResult> TestPayloadWithInput([FromBody] TestApiRequest request)
     {
-        var client = _httpClientFactory.CreateClient();
-        var response = await client.PostAsJsonAsync("http://127.0.0.1:5000/api/testPost", new { x = request.X });
-        var payload = await response.Content.ReadFromJsonAsync<TestApiResponse>();
+        try
+        {
+            var client = _httpClientFactory.CreateClient("BackendApi");
+            var response = await client.PostAsJsonAsync("api/testPost", new { x = request.X });
+            response.EnsureSuccessStatusCode();
+            var payload = await response.Content.ReadFromJsonAsync<TestApiResponse>();
 
-        return Json(payload ?? new TestApiResponse());
+            return Json(payload ?? new TestApiResponse());
+        }
+        catch (Exception exception) when (exception is HttpRequestException or JsonException)
+        {
+            return BackendUnavailable();
+        }
     }
 
     [HttpPost]
     public async Task<IActionResult> SearchPayload([FromBody] SearchApiRequest request)
     {
-        var client = _httpClientFactory.CreateClient();
-        var response = await client.PostAsJsonAsync("http://127.0.0.1:5000/api/search", new
+        if (request is null || string.IsNullOrWhiteSpace(request.Query) || request.TopK < 1)
         {
-            query = request.Query,
-            top_k = request.TopK
-        });
-        var payload = await response.Content.ReadFromJsonAsync<object>();
+            return BadRequest(new { error = "A query is required and TopK must be at least 1." });
+        }
 
-        return Json(payload ?? new { });
+        try
+        {
+            var client = _httpClientFactory.CreateClient("BackendApi");
+            var response = await client.PostAsJsonAsync("api/search", new
+            {
+                query = request.Query,
+                top_k = request.TopK
+            });
+            response.EnsureSuccessStatusCode();
+            var payload = await response.Content.ReadFromJsonAsync<object>();
+
+            return Json(payload ?? new { });
+        }
+        catch (Exception exception) when (exception is HttpRequestException or JsonException)
+        {
+            return BackendUnavailable();
+        }
+    }
+
+    private ObjectResult BackendUnavailable()
+    {
+        return StatusCode(StatusCodes.Status502BadGateway, new
+        {
+            error = "The backend API request failed. Check that the API is running and configured correctly."
+        });
     }
 
     public IActionResult Privacy()
